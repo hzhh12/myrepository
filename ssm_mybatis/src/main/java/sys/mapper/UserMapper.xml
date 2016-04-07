@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="sys.dao.UserMapper">
+	<resultMap id="BaseResultMap" type="sys.entity.User">
+		<id column="id" property="id" />
+		<result column="username" property="username" jdbcType="VARCHAR" />
+		<result column="password" property="password" jdbcType="VARCHAR" />
+		<!-- 单向外键一对一关联 -->
+		<association property="idCard" javaType="IdCard" column="c_id">
+			<id property="id" column="id" />
+			<result column="idcardname" property="idcardname" jdbcType="VARCHAR" />
+		</association>
+	</resultMap>
+
+	<select id="selectByPrimaryKey" parameterType="int" resultMap="BaseResultMap">
+		SELECT *FROM USER u,idcard c WHERE u.c_id=c.id AND u.id=#{id}
+	</select>
+
+	<!--删除时有表的别名时必须在delete后添加别名 -->
+	<delete id="deleteByPrimaryKey" parameterType="int">
+		delete u,c from USER u,idcard c where u.c_id=c.id AND u.id=#{id}
+	</delete>
+	<!-- 一对一级联插入, id="insertIdcard"和id="insert"解决级联插入问题,首先插入不含外键的一方，然后再用selectKey查询主键id值进行插入-->
+	<insert id="insertIdcard" parameterType="String">
+		INSERT INTO idcard(idcardname) values(#{idCard.idcardname});
+	</insert>
+	<insert id="insert" parameterType="User">
+		<selectKey resultType="java.lang.Integer" order="BEFORE"
+			keyProperty="id">
+			SELECT max(id) from idcard
+		</selectKey>
+		INSERT INTO USER(username,password,c_id)
+		VALUES(#{username},#{password},#{id});
+	</insert>
+	
+	<!--单向一对一更新 -->
+	<update id="updateByPrimaryKey" parameterType="User">
+		update user set username=#{username},password=#{password} where id=#{id}
+	</update>
+</mapper>
